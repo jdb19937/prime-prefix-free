@@ -1,0 +1,561 @@
+\documentclass[11pt]{amsart}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[margin=1.1in]{geometry}
+\usepackage{newtxtext,newtxmath}
+\usepackage{microtype}
+\usepackage[colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue]{hyperref}
+\usepackage{listings}
+\usepackage{upquote}
+\lstdefinelanguage{Lean}{
+  morekeywords={def,theorem,open,in},
+  sensitive=true,
+  morecomment=[l]{--},
+}
+\lstset{language=Lean, basicstyle=\small\fontfamily{lmtt}\selectfont\upshape, keywordstyle=\bfseries,
+  columns=fullflexible, keepspaces=true, breaklines=false,
+  xleftmargin=1em, aboveskip=6pt, belowskip=6pt,
+  literate={ℕ}{{$\mathbb{N}$}}1 {ℝ}{{$\mathbb{R}$}}1
+    {→}{{$\rightarrow$}}1 {∀}{{$\forall$}}1 {≤}{{$\le$}}1 {≠}{{$\ne$}}1
+    {∧}{{$\wedge$}}1 {¬}{{$\neg$}}1 {⌊}{{$\lfloor$}}1 {⌋}{{$\rfloor$}}1
+}
+
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{remark}[lemma]{Remark}
+\newtheorem*{theoremA}{Theorem}
+
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Sset}{\mathcal{S}}
+\newcommand{\vt}{\vartheta}
+
+\begin{document}
+
+\title[Prime-prefix-free integers]{The reciprocal sum of the prime-prefix-free integers\\ converges under the Riemann Hypothesis}
+
+\author{Dan Brown$^*$}
+\email{jdb1729@gmail.com}
+\thanks{$^*$Author of \emph{The Da Vinci Code}.}
+
+\date{October 4, 2026}
+
+\begin{abstract}
+Call a positive integer \emph{prime-prefix-free} if none of its proper
+binary prefixes $\lfloor n/2^k \rfloor$, $k \ge 1$, is an odd prime (OEIS
+A287117). Assuming the Riemann Hypothesis, we prove that the sum of
+$1/n$ over the prime-prefix-free integers converges. More precisely, the
+proportion of $[2^m, 2^{m+1})$ they occupy is $O_\delta(m^{-1/\log 2 +
+\delta})$ for every $\delta > 0$. The heuristic exponent is $1/\log 2
+\approx 1.4427$, and convergence rests on the inequality $1/\log 2 > 1$,
+that is, on the base $2$ being smaller than $e$. The proof combines
+Selberg's theorem on primes in almost all short intervals with an
+upper-bound sieve for prime pairs, and closes with a bootstrap for a
+delayed recurrence. The convergence statement is machine-verified in
+Lean~4 over Mathlib from Mathlib's statement of the Riemann Hypothesis.
+Numerically the sum exceeds $3.5374$ unconditionally, and a heuristic
+model fitted to exact counts up to $2^{46}$ puts it near $3.877$.
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}
+
+Arrange the positive integers in the infinite binary tree in which the
+children of $n$ are $2n$ and $2n+1$. The ancestors of $n$ are then its
+proper binary prefixes $\lfloor n/2^k \rfloor$, $k \ge 1$. Let $\Sset$ be
+the set of $n$ none of whose ancestors is an odd prime. Equivalently, the
+odd primes are made leaves of the tree, and $\Sset$ is the set of nodes
+that remain. The prime $2$ is excluded because every $n \ge 4$ has
+$2$ or $3$ as a prefix, so including it would leave a finite set. The
+sequence $\Sset = \{1, 2, 3, 4, 5, 8, 9, 16, 17, 18, 19, 32, \dots\}$ is
+A287117 in the OEIS \cite{OEIS}, and the question whether
+$\sum_{n \in \Sset} 1/n$ converges was posed on Mathematics Stack
+Exchange \cite{MSE}.
+
+\begin{theoremA}
+Assume the Riemann Hypothesis. Then $\sum_{n \in \Sset} 1/n < \infty$.
+Moreover, for every $\delta > 0$,
+\[
+\#\bigl(\Sset \cap [2^m, 2^{m+1})\bigr) \;\ll_\delta\; 2^m\, m^{-1/\log 2 + \delta}.
+\]
+\end{theoremA}
+
+The exponent is the one predicted by a probabilistic model. Pick $x \in
+[1,2)$ at random. Its binary prefix of length $m+1$ is an integer near
+$2^m$, prime with probability about $1/(m \log 2)$, and these events are
+nearly independent, so the prefixes of $x$ avoid the odd primes up to
+length $m$ with probability about $\prod_{k \le m}\bigl(1 - 1/(k\log 2)\bigr)
+\asymp m^{-1/\log 2}$. That survival probability is the proportion $r_m$
+of the level $[2^m, 2^{m+1})$ occupied by $\Sset$, and the reciprocal sum
+is comparable to $\sum_m r_m$. Convergence therefore hinges on $1/\log 2
+\approx 1.4427$ exceeding $1$. In base $b$ the same model gives the
+exponent $1/\log b$, below $1$ for every $b \ge 3$: binary is the one base
+in which the analogous sum is expected to converge.
+
+Turning the model into a proof requires lower bounds for primes in the
+set of survivors at every level. That set is a union of short intervals
+at all scales, so this is a problem about primes in short intervals,
+counted simultaneously along all branches of the tree. The proof uses
+two known results. The first is Selberg's theorem \cite{Sel}, conditional on RH, that
+almost all intervals $[x, x+h]$ with $h$ a small power of $x$ contain the
+expected number of primes; the exceptional set is small enough to survive
+a union over the polynomially many scales involved. The second is the
+classical upper-bound sieve for prime pairs \cite{HR}. It controls primes
+that have a prime ancestor only a few levels up. These pairs are beyond
+the reach of RH, and the sieve overcounts them by a constant factor, but
+they occupy only a small fraction of the levels, and that fraction can be
+made as small as we like. A telescoping identity converts the remaining
+long-range pairs into the same quantities $r_m$ that the argument
+controls, and a bootstrap for the resulting delayed recurrence finishes
+the proof.
+
+Each loss in the argument lowers the exponent $1/\log 2$, and the proof
+needs the exponent to stay above $1$, so the losses must total less than
+$1/\log 2 - 1 \approx 0.44$. In particular, the sieve's constant-factor
+overcount can be tolerated only on a small proportion of levels.
+
+\subsection*{Notation}
+Logarithms are natural. For $m \ge 0$ let $I_m = [2^m, 2^{m+1}) \cap \Z$,
+$\Sset_m = \Sset \cap I_m$, $P_m$ the set of odd primes in $\Sset_m$, and
+\[
+r_m = |\Sset_m| / 2^m \in [0,1].
+\]
+For integers $M \ge 1$ and $b \ge 0$ let
+$B(M, b) = [M 2^b, (M+1) 2^b) \cap \Z$. These are the descendants of $M$
+lying $b$ levels below it: $n \in B(M,b)$ if and only if
+$\lfloor n / 2^b \rfloor = M$. For a finite set $A$ of integers write
+$\pi(A)$ for the number of primes in $A$ and $\vt(A) = \sum_{p \in A}
+\log p$. As usual $\vt(x) = \sum_{p \le x}\log p$. Throughout,
+$c = 1/\log 2$.
+
+\section{Components}
+
+\begin{lemma}[Selberg \cite{Sel}]
+\label{lem:selberg}
+Assume the Riemann Hypothesis. For every $\theta > 0$ there is $C$ such
+that for all integers $X \ge 2$ and $h$ with $X^\theta \le h \le X^{1/2}$,
+\[
+\sum_{X \le n < 2X} \bigl(\vt(n+h) - \vt(n) - h\bigr)^2 \;\le\; C\, h X \log^2 X .
+\]
+\end{lemma}
+
+Selberg proved the integral form
+$\int_X^{2X} (\psi(x+h) - \psi(x) - h)^2\,dx \ll h X \log^2 X$ for
+$1 \le h \le X$. For integer $h$ the window $\vt(x+h) - \vt(x)$ is
+constant on each $[n, n+1)$, so the integral of the $\vt$-version is the
+sum above, and the passage from $\psi$ to $\vt$ costs only the prime
+powers $p^k$, $k \ge 2$, which contribute $O(hX\log^2 X)$ to the mean
+square. Lemma~\ref{lem:selberg} asks
+for much less than Selberg's theorem. Only windows of length at least
+$X^\theta$ are needed, for a $\theta$ we will take small but fixed.
+
+\begin{lemma}[Upper-bound sieve for prime pairs; see \cite{HR}]
+\label{lem:sieve}
+There is an absolute constant $C$ such that for all integers $Y \ge 0$,
+$H \ge 2$, $a \ge 1$, $t \ge 1$,
+\[
+\#\{Y \le n < Y + H : n \text{ and } an + t \text{ prime}\}
+\;\le\; C \Bigl(\frac{at}{\varphi(at)}\Bigr)^2 \frac{H}{\log^2 H}.
+\]
+\end{lemma}
+
+The bound is uniform in $a$ and $t$. The sieve only sifts by primes not
+dividing $2at$, and the factor $(at/\varphi(at))^2$ absorbs the
+corresponding local densities.
+
+\begin{lemma}
+\label{lem:totient}
+$\sum_{t \le T} (t/\varphi(t))^2 \ll T$.
+\end{lemma}
+
+\begin{proof}
+Write $(t/\varphi(t))^2 = \sum_{d \mid t} g(d)$ with $g$ multiplicative,
+supported on squarefree $d$, and $g(p) = (p/(p-1))^2 - 1 \le 6/p$. Then the
+sum is $\sum_d g(d) \lfloor T/d \rfloor \le T \prod_p (1 + 6/p^2)$.
+\end{proof}
+
+\section{The tree}
+
+\begin{lemma}
+\label{lem:tree}
+\begin{enumerate}
+\item[(i)] For $e \in \{0, 1\}$, $2n+e \in \Sset$ if and only if $n \in \Sset$
+and $n$ is not an odd prime.
+\item[(ii)] If $n \in \Sset$ then $\lfloor n/2^d \rfloor \in \Sset$ for
+every $d \ge 0$.
+\item[(iii)] $|\Sset_{m+1}| = 2\bigl(|\Sset_m| - |P_m|\bigr)$. Hence
+$r_{m+1} = r_m - |P_m|/2^m$, and $r$ is nonincreasing.
+\item[(iv)] $\sum_{n \in \Sset} 1/n \le \sum_{m \ge 0} r_m$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+The proper prefixes of $2n+e$ are $n$ and the proper prefixes of $n$,
+which gives (i); (ii) holds because the prefixes of $\lfloor n/2^d\rfloor$
+are prefixes of $n$; (iii) follows from (i); and (iv) from
+$1/n \le 2^{-m}$ on $I_m$.
+\end{proof}
+
+By (iii), $r_m - r_{m+1}$ is the number of odd primes in $\Sset_m$
+divided by $2^m$, so upper bounds for $r$ come from lower bounds for these
+primes.
+
+\begin{lemma}[Counting inequality]
+\label{lem:count}
+For integers $j \ge 2$ and $1 \le d \le j$,
+\[
+\sum_{N \in \Sset_{j-d}} \pi\bigl(B(N, d)\bigr)
+\;\le\; |P_j| + \sum_{b=1}^{d}\, \sum_{p \in P_{j-b}} \pi\bigl(B(p, b)\bigr).
+\]
+\end{lemma}
+
+\begin{proof}
+The blocks on the left are disjoint subsets of $I_j$, so the left side
+counts primes $q \in I_j$ with $\lfloor q/2^d \rfloor \in \Sset$. Such a
+$q$ is at least $2^j \ge 4$, hence odd. If $q \in \Sset$, then $q \in
+P_j$. Otherwise some $\lfloor q/2^k\rfloor$ with $k \ge 1$ is an odd
+prime. For $k > d$ that prefix is a proper prefix of
+$\lfloor q/2^d\rfloor \in \Sset$, so $k \le d$. Let $b \le d$ be the
+largest such $k$ and $p = \lfloor q/2^b \rfloor$. Every proper prefix of
+$p$ is $\lfloor q/2^{b+k'}\rfloor$ with $k' \ge 1$. For $b + k' \le d$ it
+is not an odd prime by the maximality of $b$; for $b + k' > d$ it is a
+prefix of an element of $\Sset$. So $p \in P_{j-b}$ and $q \in B(p, b)$.
+\end{proof}
+
+Lemma~\ref{lem:count} bounds $|P_j|$ from below by the block counts on
+the left, less the sum over $b$, which counts the primes with an
+odd-prime ancestor at most $d$ levels up. We split that sum at a
+threshold $b_0 = \lceil \theta j \rceil$. Long gaps $b \ge b_0$ are
+handled by Lemma~\ref{lem:selberg} in Section~\ref{sec:blocks}, and short
+gaps $b < b_0$ by Lemma~\ref{lem:sieve} in Section~\ref{sec:short}.
+
+\section{Blocks}
+\label{sec:blocks}
+
+Call a block $B(M, b)$ with $M \in I_{j-b}$ \emph{$\varepsilon$-bad} if
+$|\vt(B(M,b)) - 2^b| > \varepsilon 2^b$.
+
+\begin{lemma}[Few bad blocks]
+\label{lem:bad}
+Assume Lemma~\ref{lem:selberg}. Let $\theta > 0$ and $0 < \varepsilon
+\le 1$. There are $C$ and $j_1$ such that for all $j \ge j_1$ and all $b$
+with $\theta j \le b \le j/2$, the number of $\varepsilon$-bad blocks
+$B(M, b)$, $M \in I_{j-b}$, is at most $C j^3\, 2^j / 4^b$.
+\end{lemma}
+
+\begin{proof}
+Let $X = 2^j$, $h = 2^b$ and $E(n) = \vt(n+h) - \vt(n) - h$. The
+hypotheses give $X^\theta \le h \le X^{1/2}$. For $M \in I_{j-b}$ we have
+$\vt(B(M,b)) - h = E(Mh - 1)$. Put $L = \lfloor \varepsilon h / (4 \log
+3X) \rfloor$. Since $h \ge X^\theta$, for $j \ge j_1$ the quantity
+$\varepsilon h/(4\log 3X)$ is at least $2$, so $L \ge \varepsilon h / (8 \log 3X) \ge 1$. For $Mh \le n < Mh + L$, the
+difference $E(n) - E(Mh-1)$ is the $\vt$-mass of two intervals of at
+most $L$ integers below $3X$, so it is at most $2L\log 3X \le
+\varepsilon h/2$ in absolute value. Hence a bad block yields $L$
+consecutive integers $n \in [X, 2X)$ with $|E(n)| > \varepsilon h/2$, and
+these runs are disjoint for distinct $M$. By Lemma~\ref{lem:selberg},
+\[
+\#\{\text{bad } M\} \cdot L \cdot \frac{\varepsilon^2 h^2}{4} \;\le\;
+\sum_{X \le n < 2X} E(n)^2 \;\le\; C_1 h X \log^2 X,
+\]
+so the number of bad blocks is at most
+$32 C_1 X \log^2 X \log 3X / (\varepsilon^3 h^2) \ll j^3\, 2^j/4^b$.
+\end{proof}
+
+\begin{lemma}[Good blocks]
+\label{lem:good}
+Let $j \ge 1$, $b \le j$ and $M \in I_{j-b}$. If $B(M,b)$ is not
+$\varepsilon$-bad, then
+\[
+\frac{(1-\varepsilon)\, 2^b}{(j+1) \log 2} \;\le\; \pi\bigl(B(M,b)\bigr)
+\;\le\; \frac{(1+\varepsilon)\, 2^b}{j \log 2}.
+\]
+In every case $\pi(B(M,b)) \le 2^b$.
+\end{lemma}
+
+\begin{proof}
+$B(M,b) \subset I_j$, so every prime $p$ in it satisfies $j \log 2 \le
+\log p < (j+1)\log 2$.
+\end{proof}
+
+\section{Short gaps}
+\label{sec:short}
+
+\begin{lemma}
+\label{lem:short}
+Assume Lemma~\ref{lem:sieve}. There is a constant $C_5$ such that for all
+integers $1 \le b \le d'$ with $b + d' \le j$,
+\[
+\sum_{p \in P_{j-b}} \pi\bigl(B(p, b)\bigr)
+\;\le\; C_5\, |\Sset_{j-b-d'}|\, \frac{2^{b+d'}}{d'^{\,2}}.
+\]
+\end{lemma}
+
+\begin{proof}
+The primes in $B(p, b)$ are $q = 2^b p + t$ with $0 \le t < 2^b$, and $t$
+is odd since $q > 2$. By Lemma~\ref{lem:tree}(ii), $N' = \lfloor
+p/2^{d'}\rfloor$ lies in $\Sset_{j-b-d'}$, and $p \in B(N', d')$, an
+interval of length $H = 2^{d'}$. Therefore the left side is at most
+\[
+\sum_{N' \in \Sset_{j-b-d'}}\ \sum_{\substack{t < 2^b\\ t \text{ odd}}}
+\#\bigl\{n \in B(N', d') : n \text{ and } 2^b n + t \text{ prime}\bigr\}.
+\]
+For odd $t$, $2^b t/\varphi(2^b t) = 2t/\varphi(t)$, so
+Lemma~\ref{lem:sieve} with $a = 2^b$ bounds each count by
+\[
+4C \Bigl(\frac{t}{\varphi(t)}\Bigr)^2 \frac{2^{d'}}{(d' \log 2)^2},
+\]
+and Lemma~\ref{lem:totient} bounds the sum over $t$ by a constant times
+$2^b$.
+\end{proof}
+
+Heuristically the left side is $|P_{j-b}| \cdot 2^b/(j\log 2)$, which in
+terms of $r$ is of order $r\,2^j/j^2$, the same order as the right side
+with $d' \asymp j$. The bound is therefore off by a constant factor, and
+for this reason the argument applies it only for $b < \theta j$, a small
+proportion of the levels.
+
+\section{The recurrence}
+
+\begin{lemma}
+\label{lem:rec}
+Assume the Riemann Hypothesis. Let $C_5$ be as in Lemma~\ref{lem:short}
+and let $0 < \varepsilon \le 1$, $0 < \theta \le 1/7$. There are $K$ and
+$j_0$ such that for all $j \ge j_0$,
+\[
+r_{j+1} \;\le\; r_j \Bigl(1 - \frac{c}{j}\Bigr)
++ \Bigl(\frac{\eta}{j} + \frac{K}{j^2}\Bigr) r_{\lfloor j/3 \rfloor}
++ K j^3\, 2^{-\theta j},
+\qquad \eta = 2c\varepsilon + 5 C_5 \theta .
+\]
+\end{lemma}
+
+\begin{proof}
+Let $d = \lfloor j/2 \rfloor$ and $b_0 = \lceil \theta j\rceil$. For $j$
+large, $1 \le b_0 \le j/6$, so $j - b - d \ge \lfloor j/3 \rfloor$ for
+every $b < b_0$. Apply Lemma~\ref{lem:count} with this $d$ and split the
+sum over $b$ at $b_0$.
+
+\emph{Main term.} Every $N \in \Sset_{j-d}$ whose block is not bad
+contributes at least $(1-\varepsilon) 2^d/((j+1)\log 2)$ by
+Lemma~\ref{lem:good}. Lemma~\ref{lem:bad} with $b = d$ removes at most a
+proportion $O(j^3 2^{-d})$ of the $2^{j-d}$ blocks. So the left side of
+Lemma~\ref{lem:count}, divided by $2^j$, is at least
+$(1-\varepsilon)\, r_{j-d} / ((j+1)\log 2) - O(j^3 2^{-d})$.
+
+\emph{Long gaps, $b_0 \le b \le d$.} By Lemma~\ref{lem:good} for good
+blocks, the trivial bound for bad ones, and Lemma~\ref{lem:bad},
+\[
+\sum_{p \in P_{j-b}} \pi\bigl(B(p,b)\bigr) \;\le\; |P_{j-b}|
+\frac{(1+\varepsilon)2^b}{j\log 2} + O\Bigl(\frac{j^3 2^j}{2^b}\Bigr).
+\]
+By Lemma~\ref{lem:tree}(iii), $|P_{j-b}|\, 2^b = 2^j (r_{j-b} -
+r_{j-b+1})$, so the main parts telescope:
+\[
+\frac{1}{2^j}\sum_{b=b_0}^{d} \sum_{p \in P_{j-b}} \pi\bigl(B(p,b)\bigr)
+\;\le\; \frac{(1+\varepsilon)\bigl(r_{j-d} - r_{j-b_0+1}\bigr)}{j \log 2}
++ O\bigl(j^3 2^{-\theta j}\bigr).
+\]
+
+\emph{Short gaps, $1 \le b < b_0$.} Lemma~\ref{lem:short} with $d' = d$,
+together with $r_{j-b-d} \le r_{\lfloor j/3\rfloor}$, bounds their total,
+divided by $2^j$, by $C_5\, b_0\, r_{\lfloor j/3 \rfloor}/d^2 \le (5 C_5
+\theta/j + 5C_5/j^2)\, r_{\lfloor j/3\rfloor}$ for $j$ large.
+
+\emph{Assembly.} Write $A = r_{j-d}$ and $B = r_{j-b_0+1} \ge r_j$.
+Lemma~\ref{lem:count} and the three estimates give
+\[
+\frac{|P_j|}{2^j} \;\ge\; \frac{(1-\varepsilon)\frac{j}{j+1} A -
+(1+\varepsilon)(A - B)}{j \log 2} - \Bigl(\frac{5C_5\theta}{j} +
+\frac{5C_5}{j^2}\Bigr) r_{\lfloor j/3\rfloor} - O\bigl(j^3 2^{-\theta
+j}\bigr).
+\]
+The numerator equals $(1+\varepsilon)B - \bigl(2\varepsilon +
+\frac{1-\varepsilon}{j+1}\bigr) A \ge r_j - (2\varepsilon + 1/j)\,
+r_{\lfloor j/3 \rfloor}$, using $A \le r_{\lfloor j/3\rfloor}$. Inserting
+this into $r_{j+1} = r_j - |P_j|/2^j$ gives the claim.
+\end{proof}
+
+In the numerator, the long-gap correction $(1+\varepsilon)(A - B)$
+nearly cancels the main term $(1-\varepsilon)A$, leaving about
+$r_{j-b_0+1} \ge r_j$. Heuristically, the primes at level $j$ below a
+surviving node $d$ levels up number about $r_{j-d}\, 2^j/(j\log 2)$, and
+those removed by an earlier prime ancestor account for the decrease of $r$
+between levels $j-d$ and $j - b_0$. The cancellation holds up to the
+factors $1 \pm \varepsilon$, which is why the long gaps need the
+asymptotic count of Lemma~\ref{lem:selberg} and cannot be handled by the
+sieve.
+
+\begin{lemma}[Bootstrap]
+\label{lem:boot}
+Let $r_j \ge 0$, $c, \eta \ge 0$, $\alpha \ge 0$ with $\alpha + 4^\alpha
+\eta \le c$, and let $e_j, g_j \ge 0$ with $\sum e_j < \infty$ and $\sum
+j^\alpha g_j < \infty$. If
+\[
+r_{j+1} \;\le\; r_j\Bigl(1 - \frac{c}{j}\Bigr) + \Bigl(\frac{\eta}{j} +
+e_j\Bigr) r_{\lfloor j/3\rfloor} + g_j
+\]
+for all large $j$, then $r_j = O(j^{-\alpha})$.
+\end{lemma}
+
+\begin{proof}
+Let $s_j = j^\alpha r_j$ and $S_j = \max_{1 \le i \le j} s_i$. For $j
+\ge \max(12, c)$ we have $1 - c/j \ge 0$ and $\lfloor j/3 \rfloor \ge
+j/4$, so $r_{\lfloor j/3\rfloor} \le 4^\alpha S_j j^{-\alpha}$. Using
+$(1+1/j)^\alpha \le e^{\alpha/j}$ and $1 + x \le e^x$,
+\[
+s_{j+1} \;\le\; S_j\, e^{\alpha/j}\Bigl(1 - \frac{c}{j} +
+\frac{4^\alpha\eta}{j} + 4^\alpha e_j\Bigr) + (j+1)^\alpha g_j
+\;\le\; S_j\, e^{4^\alpha e_j} + (j+1)^\alpha g_j .
+\]
+Hence $S_{j+1} \le S_j e^{4^\alpha e_j} + (j+1)^\alpha g_j$, and $S_j$
+is bounded.
+\end{proof}
+
+\begin{proof}[Proof of the Theorem]
+Given $\delta > 0$, set $\alpha = c - \delta$ and choose $\varepsilon$ and
+$\theta$ so small that $4^\alpha (2c\varepsilon + 5C_5\theta) \le
+\delta$. Lemma~\ref{lem:rec} supplies the hypothesis of
+Lemma~\ref{lem:boot} with $e_j = K/j^2$ and $g_j = K j^3 2^{-\theta j}$.
+So $|\Sset_m| = 2^m r_m \ll 2^m m^{-c+\delta}$. Taking $\delta < c - 1$,
+the sum $\sum r_m$ converges, and Lemma~\ref{lem:tree}(iv) finishes the
+proof.
+\end{proof}
+
+For the convergence statement alone, the formalization fixes $\alpha =
+6/5$, $\varepsilon = 1/200$ and $\theta = 1/(1000(C_5+1))$. Then $\eta
+\le 0.02$, $4^{6/5} < 6$ and $6/5 + 6 \cdot 0.02 < 1.44 < c$.
+
+\section{Remarks}
+
+\begin{remark}[Where RH enters]
+\label{rem:rh}
+The Riemann Hypothesis is used once, through Lemma~\ref{lem:selberg},
+and only for windows $h \ge X^\theta$ with $\theta$ small. The
+smallness of $\theta$ is forced by the sieve constant: the short-gap
+term contributes $5C_5\theta$ to $\eta$, and $\eta$ has to fit inside
+the margin $c - 1 \approx 0.44$. Unconditionally,
+Lemma~\ref{lem:selberg} is known for $\theta > 1/6$ by Huxley's
+zero-density estimate \cite{Hux}, and for $\theta > 2/15$ after Guth and
+Maynard \cite{GM}. Both are far too large, since an upper-bound sieve
+cannot count the pairs $(p, 2p+1)$, $(p, 4p+t)$, \dots{} within a factor
+close to $1$ (the parity problem). A proof with no hypothesis would
+therefore need either primes in almost all intervals $[x, x + x^\theta]$
+for a small explicit $\theta$, or a way around the short gaps. The
+density hypothesis for $\zeta$ would serve in place of RH: it gives
+almost-all asymptotics for windows of length $X^\theta$ for every
+$\theta > 0$, with exceptional sets small enough for a weaker form of
+Lemma~\ref{lem:bad} that the argument tolerates.
+\end{remark}
+
+\begin{remark}[Other bases]
+In base $b$ the same tree has branching $b$, a prefix at level $m$ is
+prime with probability about $1/(m \log b)$, and the model gives $r_m
+\approx m^{-1/\log b}$. For $b \ge 3$ the exponent is below $1$ and the
+analogous reciprocal sum is expected to diverge. The proof above uses
+the size of the exponent only through $c > 1$.
+\end{remark}
+
+\begin{remark}[Numerics]
+\label{rem:numerics}
+NUMERICS
+\end{remark}
+
+\begin{remark}[Formal verification]
+\label{rem:lean}
+The convergence statement of the Theorem has been machine-verified in
+Lean~4 over Mathlib, through the bound $r_m \ll m^{-6/5}$, from Mathlib's definition of the Riemann Hypothesis and with no
+other hypothesis beyond Lean's three standard axioms. The statement,
+verbatim from \texttt{PPF/Main.lean} of the formalization (the file
+contains nothing else besides imports and a docstring), is:
+
+\noindent\begin{minipage}{\linewidth}
+\begin{lstlisting}
+def PrimePrefixFree (n : ℕ) : Prop :=
+  ∀ k : ℕ, 1 ≤ k → ¬ ((n / 2 ^ k).Prime ∧ n / 2 ^ k ≠ 2)
+
+open Classical in
+theorem ppf_summable_of_RH (hRH : RiemannHypothesis) :
+    Summable (fun n : ℕ => if PrimePrefixFree n then (1 : ℝ) / n else 0) :=
+  (PPF.summable_of_inputs (PPF.selbergMeanSquare_of_RH hRH) PPF.pairSieve).congr
+    fun _ => if_congr Iff.rfl rfl rfl
+\end{lstlisting}
+\end{minipage}
+
+Here \texttt{RiemannHypothesis}, \texttt{Prime} and \texttt{Summable}
+are Mathlib's, and natural-number division \texttt{n / 2 \^{} k} is the
+floor. The term $n = 0$ contributes $1/0 = 0$ by Lean's convention.
+
+The proof has three audited layers, matching the structure of this
+paper. \texttt{summable\_of\_inputs} derives the conclusion from
+Lemmas~\ref{lem:selberg} and~\ref{lem:sieve}, stated as hypotheses;
+\texttt{pairSieve} proves Lemma~\ref{lem:sieve}; and
+\texttt{selbergMeanSquare\_of\_RH} proves Lemma~\ref{lem:selberg} from
+RH. The last of these is the main offensive, and its proof follows the
+classical route with two adaptations to the available infrastructure.
+The truncated explicit formula
+\[
+\psi(y) = y - \sum_{|\gamma| \le T} \frac{y^\rho}{\rho} + O\Bigl(\frac{y
+\log^2 (Ty)}{T} + \log^2(Ty)\Bigr)
+\]
+(cf.~\cite{Dav}, Ch.~17) is obtained by moving the contour to
+$\operatorname{Re} s = -1/2$. On
+the left edge and the left halves of the horizontal edges, $\zeta'/\zeta$
+is controlled by reflecting through the functional equation, which needs
+a bound $|\psi_\Gamma(w)| \ll \log |\operatorname{Im} w|$ for the
+digamma function, proved from Euler's limit formula. The mean square of
+the zero sum is then computed as in \cite{Sel}, but against the
+polynomial weight $\bigl((u - X/2)(4X - u)/X^2\bigr)^2$ majorizing
+$1_{[X, 3X]}$. Two integrations by parts turn the kernel
+$\int u^{-1 + i(\gamma - \gamma')}\,du$ into $O\bigl(1/(1 + (\gamma -
+\gamma')^2)\bigr)$, which with the zero count $N(t+1) - N(t) \ll \log t$
+gives $h X \log^2 X$ without the extra logarithm a sharp cutoff would
+cost. The sieve generalizes the twin-type bound of the Carmichael
+formalization \cite{Bro} to arbitrary intervals and linear forms. That
+formalization also supplies the Selberg sieve, the Perron kernel,
+contour integrals over rectangles, and zero counting, all reused
+verbatim. The new part is about 6{,}800 lines, and the reused part
+about 14{,}900. A kernel-checked test confirms that
+\texttt{PrimePrefixFree} selects exactly the 61 terms of A287117 below
+$536$. The repository is
+\url{https://github.com/jdb19937/prime-prefix-free}.
+\end{remark}
+
+\begin{thebibliography}{9}
+
+\bibitem{Bro} D. Brown,
+\emph{A deterministic quasi-polylogarithmic algorithm for constructing
+Carmichael numbers}, 2026.
+Formalization: \url{https://github.com/jdb19937/carmichael}.
+
+\bibitem{Dav} H. Davenport,
+\emph{Multiplicative Number Theory}, 3rd ed., Graduate Texts in
+Mathematics \textbf{74}, Springer, New York, 2000.
+
+\bibitem{GM} L. Guth, J. Maynard,
+\emph{New large value estimates for Dirichlet polynomials},
+Ann. of Math. (2) \textbf{203} (2026), no.~2.
+\href{https://arxiv.org/abs/2405.20552}{arXiv:2405.20552}.
+
+\bibitem{HR} H. Halberstam, H.-E. Richert,
+\emph{Sieve Methods}, London Mathematical Society Monographs~\textbf{4},
+Academic Press, London, 1974.
+
+\bibitem{Hux} M.~N. Huxley,
+\emph{On the difference between consecutive primes},
+Invent. Math. \textbf{15} (1972), 164--170.
+
+\bibitem{MSE} D. Brumleve,
+\emph{Does the sum of reciprocals of all prime-prefix-free numbers
+converge?}, Mathematics Stack Exchange, question 2288648 (2017).
+\url{https://math.stackexchange.com/questions/2288648}.
+
+\bibitem{OEIS} OEIS Foundation,
+\emph{The On-Line Encyclopedia of Integer Sequences}, sequence A287117.
+\url{https://oeis.org/A287117}.
+
+\bibitem{Sel} A. Selberg,
+\emph{On the normal density of primes in small intervals, and the
+difference between consecutive primes},
+Arch. Math. Naturvid. \textbf{47} (1943), no.~6, 87--105.
+
+\end{thebibliography}
+\end{document}

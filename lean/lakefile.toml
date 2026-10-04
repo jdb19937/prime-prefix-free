@@ -1,0 +1,19 @@
+name = "ppf"
+version = "0.1.0"
+defaultTargets = ["PPF"]
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+rev = "v4.33.1"
+
+# autoImplicit off: a typo'd identifier in a theorem statement must be an
+# error, never a silently auto-bound variable.
+[[lean_lib]]
+name = "PPF"
+leanOptions = { autoImplicit = false }
+
+# Axiom audit: `#guard_msgs` over `#print axioms`, run by `make verify`.
+[[lean_lib]]
+name = "AxiomCheck"
+leanOptions = { autoImplicit = false }
