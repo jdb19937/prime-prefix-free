@@ -50,7 +50,7 @@ Selberg's theorem on primes in almost all short intervals with an
 upper-bound sieve for prime pairs, and closes with a bootstrap for a
 delayed recurrence. The convergence statement is machine-verified in
 Lean~4 over Mathlib from Mathlib's statement of the Riemann Hypothesis.
-Numerically the sum exceeds $3.5374$ unconditionally, and a heuristic
+Numerically the sum exceeds $3.5276$ unconditionally, and a heuristic
 model fitted to exact counts up to $2^{46}$ puts it near $3.877$.
 \end{abstract}
 
@@ -456,7 +456,45 @@ the size of the exponent only through $c > 1$.
 
 \begin{remark}[Numerics]
 \label{rem:numerics}
-NUMERICS
+We enumerated $\Sset \cap [1, 2^{46})$ exactly. It has $278{,}565{,}951{,}473$
+elements, and every odd element at a level below $45$ was tested for
+primality. With $\sigma_m = \sum_{n \in \Sset,\, n < 2^{m+1}} 1/n$:
+\begin{center}
+\begin{tabular}{rrrcc}
+$m$ & $|\Sset_m|$ & $|P_m|$ & $m^{1/\log 2}\, r_m$ & $\sigma_m$ \\
+\hline
+$10$ & $46$ & $7$ & $1.2450$ & $3.156643$ \\
+$20$ & $13{,}994$ & $1{,}015$ & $1.0054$ & $3.367433$ \\
+$30$ & $7{,}601{,}600$ & $374{,}156$ & $0.9573$ & $3.455907$ \\
+$40$ & $5{,}015{,}825{,}530$ & $184{,}008{,}384$ & $0.9342$ & $3.508295$ \\
+$44$ & $69{,}489{,}573{,}032$ & $2{,}313{,}408{,}766$ & $0.9281$ & $3.524057$
+\end{tabular}
+\end{center}
+Hence, unconditionally, $\sum_{n \in \Sset} 1/n > \sigma_{45} =
+3.527667\ldots$. The normalized density $m^{1/\log 2} r_m$ decreases
+slowly. The proportion $h_m = |P_m|/|\Sset_m|$ of odd primes exceeds the
+model's prediction $h^0_m = |\Sset_m|^{-1}\sum_{n \in \Sset_m,\, n \text{
+odd}} 2/\log n \approx 1/(m \log 2 + 0.057)$ by a factor $1 + 0.53\,h^0_m$,
+with the coefficient stable to within $0.02$ over $37 \le m \le 44$. The
+excess has a simple source. An odd child $2N+1$ is divisible by an odd
+prime $q$ only if $N \equiv (q-1)/2 \not\equiv 0 \pmod q$, and the parents
+$N$ that survive have lost the primes, which all lie in nonzero classes.
+So the odd elements of $\Sset_m$ are slightly less often divisible by
+small primes than random odd integers. An excess proportional to $h^0_m$
+changes $r_m$ only by a convergent factor and leaves the exponent
+$1/\log 2$ intact.
+
+Extrapolating with $r_{m+1} = r_m(1 - h_m)$, $h_m = (1 + 0.535\,
+h^0_m)\, h^0_m$ and $\sum_{n \in \Sset_m} 1/n = 0.9455\, r_m$ (the last
+ratio varies by less than $2 \cdot 10^{-4}$ for $m \ge 20$) gives
+\[
+\sum_{n \in \Sset} \frac{1}{n} \;\approx\; 3.877 .
+\]
+Starting the extrapolation at any cutoff between $26$ and $45$ moves the
+value by less than $0.002$; dropping the excess term gives $3.884$. These
+figures are heuristic. The constants in the proof are far too large to
+bound the tail rigorously, and the tail beyond $2^{46}$ is still about
+$0.35$, since it decays only like $m^{1 - 1/\log 2}$.
 \end{remark}
 
 \begin{remark}[Formal verification]
