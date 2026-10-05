@@ -50,7 +50,7 @@ that is, on the base $2$ being smaller than $e$. The proof combines
 Selberg's theorem on primes in almost all short intervals with an
 upper-bound sieve for prime pairs, and closes with a bootstrap for a
 delayed recurrence. The constants are effective: the sum is less than
-$4.5 \cdot 10^{14}$. Convergence and this bound are
+$F_{72} \approx 5 \cdot 10^{14}$. Convergence and this bound are
 machine-verified in Lean~4 over Mathlib, from Mathlib's statement of the
 Riemann Hypothesis. Numerically the sum exceeds $3.5276$
 unconditionally, and a heuristic model fitted to exact counts up to
@@ -82,7 +82,8 @@ Moreover, for every $\delta > 0$,
 \end{theoremA}
 
 The implied constants are effective. Remark~\ref{rem:explicit} makes
-them numeric and obtains $\sum_{n \in \Sset} 1/n < 4.5 \cdot 10^{14}$
+them numeric and obtains $\sum_{n \in \Sset} 1/n < F_{72} \approx 5 \cdot
+10^{14}$
 under RH, while the exact count below $2^{46}$ gives $\sum_{n \in \Sset}
 1/n > 3.5276$ unconditionally (Remark~\ref{rem:numerics}).
 
@@ -518,7 +519,7 @@ and the bootstrap with $\alpha = 5/4$ gives $r_j \le 3(2^{55} + 1)\,
 j^{-5/4}$ there. Bounding $r_j \le 1$ below $2^{44}$,
 \[
 \sum_{n \in \Sset} \frac{1}{n} \;\le\; 2^{44} + \frac{3(2^{55}+1)}{256}
-\;<\; 4.5 \cdot 10^{14},
+\;<\; F_{72} \approx 5 \cdot 10^{14},
 \]
 which is the bound proved in the formalization. It is far
 from the true value near $3.877$ because the recurrence becomes effective
@@ -543,7 +544,7 @@ def PrimePrefixFree (n : ℕ) : Prop :=
 open Classical in
 theorem ppf_hasSum_of_RH (hRH : RiemannHypothesis) :
     ∃ s : ℝ, HasSum (fun n : ℕ => if PrimePrefixFree n then (1 : ℝ) / n else 0) s ∧
-      s ≤ 4.5 * 10 ^ 14 := by
+      s ≤ Nat.fib 72 := by
   have hs : Summable (fun n : ℕ => if PrimePrefixFree n then (1 : ℝ) / n else 0) :=
     (PPF.summable_of_inputs (PPF.selbergMeanSquare_of_RH hRH) PPF.pairSieve).congr
       fun _ => if_congr Iff.rfl rfl rfl
@@ -553,8 +554,8 @@ theorem ppf_hasSum_of_RH (hRH : RiemannHypothesis) :
 \end{lstlisting}
 \end{minipage}
 
-Here \texttt{RiemannHypothesis}, \texttt{Prime} and \texttt{HasSum} are
-Mathlib's, and natural-number division \texttt{n / 2 \^{} k} is the
+Here \texttt{RiemannHypothesis}, \texttt{Prime}, \texttt{HasSum} and
+\texttt{Nat.fib} are Mathlib's, and natural-number division \texttt{n / 2 \^{} k} is the
 floor. The term $n = 0$ contributes $1/0 = 0$ by Lean's convention.
 \texttt{HasSum f s} says that the series converges, unconditionally, to
 $s$. The statement is phrased this way because Mathlib assigns the value
@@ -590,7 +591,7 @@ formalization \cite{Bro} to arbitrary intervals and linear forms. That
 formalization also supplies the Selberg sieve, the Perron kernel,
 contour integrals over rectangles, and zero counting, all reused
 verbatim. The fourth layer, \texttt{PPF.Explicit}, restates these proofs
-with every constant numeric and assembles the bound $4.5 \cdot 10^{14}$ of
+with every constant numeric and assembles the bound of
 Remark~\ref{rem:explicit}. The new part is about 9{,}900 lines, and the
 reused part is about 14{,}900. A kernel-checked test confirms that
 \texttt{PrimePrefixFree} selects exactly the 61 terms of A287117 below
