@@ -1,7 +1,7 @@
 # Prime-prefix-free numbers: convergence of the reciprocal sum under RH
 
 A Lean 4 / Mathlib proof that, assuming the Riemann Hypothesis, the reciprocals of
-OEIS A287117 have a finite sum. A287117 consists of the integers with no odd prime
+OEIS A287117 have a finite sum, and that the sum is less than `4.5·10^14`. A287117 consists of the integers with no odd prime
 among their proper binary prefixes `⌊n/2^k⌋`, `k ≥ 1`.
 
 ```lean
@@ -9,15 +9,18 @@ def PrimePrefixFree (n : ℕ) : Prop :=
   ∀ k : ℕ, 1 ≤ k → ¬ ((n / 2 ^ k).Prime ∧ n / 2 ^ k ≠ 2)
 
 open Classical in
-theorem ppf_summable_of_RH (hRH : RiemannHypothesis) :
-    Summable (fun n : ℕ => if PrimePrefixFree n then (1 : ℝ) / n else 0)
+theorem ppf_hasSum_of_RH (hRH : RiemannHypothesis) :
+    ∃ s : ℝ, HasSum (fun n : ℕ => if PrimePrefixFree n then (1 : ℝ) / n else 0) s ∧
+      s ≤ 4.5 * 10 ^ 14
 ```
 
 `PPF/Main.lean` contains exactly this definition and theorem, so it can be read on its
 own: every other name in the statement is Mathlib's, including `RiemannHypothesis`.
 The development uses an identical copy, `PPF.PrimePrefixFree`, and the main proof
-identifies the two by `Iff.rfl`. `#print axioms ppf_summable_of_RH` reports
-`[propext, Classical.choice, Quot.sound]`.
+identifies the two by `Iff.rfl`. `#print axioms ppf_hasSum_of_RH` reports
+`[propext, Classical.choice, Quot.sound]`. `HasSum` says the series converges to `s`; a
+bound on `∑'` alone would not, since Mathlib defines the sum of a divergent series to
+be `0`.
 
 `PPF/TreeTest.lean` checks the definition against the first 61 terms of A287117. It
 proves, by `decide +kernel`, that the numbers in `[1, 535]` with the property are
@@ -58,7 +61,8 @@ Two analytic inputs enter the recurrence.
 | `summable_of_inputs` | `SelbergMeanSquare`, `PairSieve` | `PPF/Conditional.lean` |
 | `pairSieve` | none | `PPF/Sieve.lean`, `PPF/Sieve/Pair.lean` |
 | `selbergMeanSquare_of_RH` | `RiemannHypothesis` | `PPF/Selberg.lean`, `PPF/RH/*` |
-| `ppf_summable_of_RH` | `RiemannHypothesis` | `PPF/Main.lean` (self-contained statement) |
+| `PPF.Explicit.tsum_le_of_RH` | `RiemannHypothesis` | `PPF/Explicit/*` |
+| `ppf_hasSum_of_RH` | `RiemannHypothesis` | `PPF/Main.lean` (self-contained statement) |
 
 ## Files
 
@@ -80,6 +84,7 @@ Two analytic inputs enter the recurrence.
 | `PPF/RH/Kernel.lean`, `PPF/RH/ZeroSums.lean` | weighted Mellin kernel `≪ X^{α+1}/(1+τ²)`; double sums over zeros |
 | `PPF/RH/MeanSquare.lean` | mean square of the zero sum `≪ h X log² X` |
 | `PPF/RH/Windows.lean` | from ψ to θ and from integrals to sums; assembly of `SelbergMeanSquare` |
+| `PPF/Explicit/*` | the explicit bound: every constant of the RH chain made numeric (explicit formula `1.3·10^7`, Selberg mean square `5·10^18`, sieve `16416`), the recurrence for `j ≥ 2^44` with `θ = 2^{-32}`, and the bootstrap `r_j ≤ 3(2^55+1) j^{-5/4}`; `scripts/explicit_bound.py` mirrors the arithmetic |
 | `PPF/Vendor/*` | verbatim copies from [jdb19937/carmichael](https://github.com/jdb19937/carmichael) (`lean/Carmichael/`): `SelbergBound`, `TwinSieve`, `TotientSum`, `TotientSumSq`, `PerronKernel`, `LGrowth`, `ZeroCount`, `PartialFractions`, `ExplicitFormula` |
 
 ## Verify
@@ -89,8 +94,13 @@ make verify
 ```
 
 This runs `lake build`, then `AxiomCheck.lean`. The `#guard_msgs` blocks there fail
-unless the four layer theorems depend only on the three standard axioms. Finally it
-runs `PPF/TreeTest.lean`.
+unless the main theorem and the four layer theorems (`summable_of_inputs`, `pairSieve`,
+`selbergMeanSquare_of_RH`, `PPF.Explicit.tsum_le_of_RH`) depend only on the three
+standard axioms. Then it
+runs `PPF/TreeTest.lean`. Last, `scripts/ReplayClosure.lean` collects every constant
+the main theorem depends on (about 64,000, including Mathlib and Lean core) and
+replays them through the kernel into an empty environment. This independent
+re-check does not trust the build's compiled files or elaboration-time options.
 
 Pinned versions: Lean `v4.33.1`, Mathlib `v4.33.1`, the same as
 [jdb19937/carmichael](https://github.com/jdb19937/carmichael).
