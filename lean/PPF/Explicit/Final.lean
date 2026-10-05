@@ -9,7 +9,7 @@ From the recurrence for `j ≥ J` (`r ≤ 1` below `J`, `α = 5/4`,
 `α + 4^α·etaE ≤ cE`), `PPF.step_bound`/`PPF.recSeq_bound` give
 `i^{5/4} r i ≤ M = (J^{5/4} + V)·exp(4^{5/4}·E)` for all `i`, with
 `E ≥ Σ_{j ≥ J} eE j` (`E = 1/1000`), `V ≥ Σ_{j ≥ J} (j+1)^{5/4} gE j` (`V = 1`).
-Then `Σ_{m<N} r m ≤ J + M (J^{-5/4} + 4 J^{-1/4}) ≤ 4.5·10^14`
+Then `Σ_{m<N} r m ≤ J + M (J^{-5/4} + 4 J^{-1/4}) ≤ F_72 ≈ 5·10^14`
 (`J^{1/4} = 2^11`, `J^{5/4} = 2^55`; the true value is ≈ 8.9·10^13).
 -/
 
@@ -64,7 +64,7 @@ open Fn Real Finset
 theorem partial_sum_r_le
     (hrec : ∀ j : ℕ, J ≤ j →
       r (j + 1) ≤ r j * (1 - cE / j) + (etaE / j + eE j) * r (j / 3) + gE j) :
-    ∀ N : ℕ, ∑ m ∈ Finset.range N, r m ≤ (4.5 : ℝ) * 10 ^ 14 := by
+    ∀ N : ℕ, ∑ m ∈ Finset.range N, r m ≤ (Nat.fib 72 : ℝ) := by
   intro N
   set α : ℝ := 5 / 4 with hα
   set A : ℝ := (4 : ℝ) ^ α with hAdef
@@ -164,7 +164,8 @@ theorem partial_sum_r_le
         have := Jm1_rpow_le
         rw [J_real] at this
         gcongr
-    _ ≤ (4.5 : ℝ) * 10 ^ 14 := by rw [hM]; norm_num
+    _ ≤ (Nat.fib 72 : ℝ) := by
+        rw [hM, show Nat.fib 72 = 498454011879264 by norm_num]; norm_num
 
 theorem tsum_le_of_partial_sum_r (R : ℝ) (h : ∀ N : ℕ, ∑ m ∈ Finset.range N, r m ≤ R) :
     ∑' n : ℕ, (if PrimePrefixFree n then (1 : ℝ) / n else 0) ≤ R := by

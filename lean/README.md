@@ -1,7 +1,7 @@
 # Prime-prefix-free numbers: convergence of the reciprocal sum under RH
 
 A Lean 4 / Mathlib proof that, assuming the Riemann Hypothesis, the reciprocals of
-OEIS A287117 have a finite sum, and that the sum is less than `4.5·10^14`. A287117 consists of the integers with no odd prime
+OEIS A287117 have a finite sum, and that the sum is at most `Nat.fib 72` ≈ 5·10^14. A287117 consists of the integers with no odd prime
 among their proper binary prefixes `⌊n/2^k⌋`, `k ≥ 1`.
 
 ```lean
@@ -11,7 +11,7 @@ def PrimePrefixFree (n : ℕ) : Prop :=
 open Classical in
 theorem ppf_hasSum_of_RH (hRH : RiemannHypothesis) :
     ∃ s : ℝ, HasSum (fun n : ℕ => if PrimePrefixFree n then (1 : ℝ) / n else 0) s ∧
-      s ≤ 4.5 * 10 ^ 14
+      s ≤ Nat.fib 72
 ```
 
 `PPF/Main.lean` contains exactly this definition and theorem, so it can be read on its
