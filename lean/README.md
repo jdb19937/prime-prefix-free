@@ -84,7 +84,7 @@ Two analytic inputs enter the recurrence.
 | `PPF/RH/Kernel.lean`, `PPF/RH/ZeroSums.lean` | weighted Mellin kernel `≪ X^{α+1}/(1+τ²)`; double sums over zeros |
 | `PPF/RH/MeanSquare.lean` | mean square of the zero sum `≪ h X log² X` |
 | `PPF/RH/Windows.lean` | from ψ to θ and from integrals to sums; assembly of `SelbergMeanSquare` |
-| `PPF/Explicit/*` | the explicit bound: every constant of the RH chain made numeric (explicit formula `1.3·10^7`, Selberg mean square `5·10^18`, sieve `16416`), the recurrence for `j ≥ 2^44` with `θ = 2^{-32}`, and the bootstrap `r_j ≤ 3(2^55+1) j^{-5/4}`; `scripts/explicit_bound.py` mirrors the arithmetic |
+| `PPF/Explicit/*` | the explicit bound: every constant of the RH chain made numeric (explicit formula `1.3·10^7`, Selberg mean square `5·10^18`, sieve `16416`), the recurrence for `j ≥ 2^44` with `θ = 2^{-32}`, and the bootstrap `r_j ≤ 3(2^55+1) j^{-5/4}` |
 | `PPF/Vendor/*` | verbatim copies from [jdb19937/carmichael](https://github.com/jdb19937/carmichael) (`lean/Carmichael/`): `SelbergBound`, `TwinSieve`, `TotientSum`, `TotientSumSq`, `PerronKernel`, `LGrowth`, `ZeroCount`, `PartialFractions`, `ExplicitFormula` |
 
 ## Verify
